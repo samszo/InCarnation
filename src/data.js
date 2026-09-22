@@ -161,7 +161,16 @@ export function toPerson(binding) {
 }
 
 export function extractEntityId(uri) {
-  return uri?.split('/').at(-1) ?? '';
+  if (!uri) {
+    return '';
+  }
+
+  try {
+    const url = new URL(uri);
+    return url.pathname.split('/').filter(Boolean).at(-1) ?? '';
+  } catch {
+    return uri.split('/').filter(Boolean).at(-1) ?? '';
+  }
 }
 
 export function sanitizeDay(day) {

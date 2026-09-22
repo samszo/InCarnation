@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {
   buildGraphData,
   buildSparqlQuery,
+  fetchIncarnations,
   formatDate,
   normalizeResults,
   sanitizeLimit,
@@ -61,6 +62,48 @@ test('normalizeResults separates born and dead people without duplicates', () =>
   assert.equal(results.sharedDateLabel, '10 décembre');
 });
 
+test('fetchIncarnations calls the endpoint with the expected headers and normalizes the payload', async () => {
+  const originalFetch = global.fetch;
+  const calls = [];
+  global.fetch = async (url, options) => {
+    calls.push({ url, options });
+    return {
+      ok: true,
+      async json() {
+        return {
+          results: {
+            bindings: [
+              {
+                person: { value: 'https://www.wikidata.org/entity/Q1?foo=1' },
+                personLabel: { value: 'Ada Lovelace' },
+                role: { value: 'born' },
+                birthDate: { value: '1815-12-10T00:00:00Z' },
+              },
+            ],
+          },
+        };
+      },
+    };
+  };
+
+  try {
+    const results = await fetchIncarnations({
+      day: 10,
+      month: 12,
+      limit: 3,
+      endpoint: 'https://example.test/sparql',
+    });
+
+    assert.equal(calls.length, 1);
+    assert.match(calls[0].url, /^https:\/\/example\.test\/sparql\?format=json&query=/);
+    assert.equal(calls[0].options.headers.accept, 'application/sparql-results+json');
+    assert.equal(results.bornPeople[0].id, 'Q1');
+    assert.equal(results.sharedDateLabel, '10 décembre');
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
 test('buildGraphData links every born person to every dead person', () => {
   const graph = buildGraphData({
     bornPeople: [
@@ -83,4 +126,18 @@ test('formatDate keeps Wikidata UTC dates stable and sanitizeHttpUrl filters uns
   assert.equal(sanitizeHttpUrl('https://www.wikidata.org/entity/Q42'), 'https://www.wikidata.org/entity/Q42');
   assert.equal(sanitizeHttpUrl('://broken-url'), null);
   assert.equal(sanitizeHttpUrl('javascript:alert(1)'), null);
+});
+
+test('fetchIncarnations throws on non-OK HTTP responses', async () => {
+  const originalFetch = global.fetch;
+  global.fetch = async () => ({ ok: false, status: 503 });
+
+  try {
+    await assert.rejects(
+      () => fetchIncarnations({ day: 10, month: 12, limit: 3, endpoint: 'https://example.test/sparql' }),
+      /503/,
+    );
+  } finally {
+    global.fetch = originalFetch;
+  }
 });

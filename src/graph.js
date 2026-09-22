@@ -5,10 +5,9 @@ const COLORS = {
   born: '#2f6fed',
   dead: '#d94b4b',
 };
-let activeSimulation = null;
 
 export function renderGraph({ container, graph, onSelect }) {
-  activeSimulation?.stop();
+  container.__graphSimulation?.stop();
   container.replaceChildren();
 
   if (!graph.nodes.length) {
@@ -61,7 +60,7 @@ export function renderGraph({ container, graph, onSelect }) {
     .force('collide', d3.forceCollide(radius + 48))
     .force('x', d3.forceX((node) => (node.role === 'born' ? width * 0.28 : width * 0.72)).strength(0.28))
     .force('y', d3.forceY(height / 2).strength(0.08));
-  activeSimulation = simulation;
+  container.__graphSimulation = simulation;
 
   const link = svg
     .append('g')
@@ -209,7 +208,7 @@ export function renderDetails(container, person) {
     const link = document.createElement('a');
     link.href = person.wikidataUrl;
     link.target = '_blank';
-    link.rel = 'noreferrer';
+    link.rel = 'noreferrer noopener';
     link.textContent = 'Voir la fiche Wikidata';
     linkParagraph.append(link);
     card.append(linkParagraph);
