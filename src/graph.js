@@ -124,10 +124,6 @@ export function renderGraph({ container, graph, onSelect }) {
 
     node.attr('transform', (d) => `translate(${d.x},${d.y})`);
   });
-
-  if (nodes[0]) {
-    onSelect?.(nodes[0]);
-  }
 }
 
 function shortDates(person) {

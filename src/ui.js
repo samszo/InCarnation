@@ -30,6 +30,8 @@ export async function handleSearchSubmission({
 
     return { ok: true, results, graph };
   } catch (error) {
+    graphNode.__graphSimulation?.stop();
+    graphNode.__graphSimulation = null;
     graphNode.replaceChildren();
     renderErrorDetailsFn?.(detailsNode, error);
     statusNode.textContent = 'Impossible de charger les données.';
