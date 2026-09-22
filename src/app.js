@@ -11,8 +11,8 @@ const graphNode = document.querySelector('#graph');
 const detailsNode = document.querySelector('#details');
 
 const now = new Date();
-dayInput.value = String(now.getDate());
-monthInput.value = String(now.getMonth() + 1);
+dayInput.value = String(now.getUTCDate());
+monthInput.value = String(now.getUTCMonth() + 1);
 
 form.addEventListener('submit', async (event) => {
   event.preventDefault();

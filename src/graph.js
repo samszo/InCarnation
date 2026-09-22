@@ -26,8 +26,7 @@ export function renderGraph({ container, graph, onSelect }) {
   const svg = d3
     .select(container)
     .append('svg')
-    .attr('viewBox', [0, 0, width, height])
-    .attr('aria-hidden', true);
+    .attr('viewBox', [0, 0, width, height]);
 
   const defs = svg.append('defs');
   graph.nodes.forEach((node) => {
@@ -75,6 +74,9 @@ export function renderGraph({ container, graph, onSelect }) {
     .selectAll('g')
     .data(nodes)
     .join('g')
+    .attr('tabindex', 0)
+    .attr('role', 'button')
+    .attr('aria-label', (d) => `${d.label}, ${formatPersonDates(d)}`)
     .style('cursor', 'pointer')
     .call(drag(simulation));
 
@@ -102,7 +104,14 @@ export function renderGraph({ container, graph, onSelect }) {
     .style('font-size', '11px')
     .text((d) => shortDates(d));
 
-  node.on('click', (_, selectedNode) => onSelect?.(selectedNode));
+  node
+    .on('click', (_, selectedNode) => onSelect?.(selectedNode))
+    .on('keydown', (event, selectedNode) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        onSelect?.(selectedNode);
+      }
+    });
 
   simulation.on('tick', () => {
     link

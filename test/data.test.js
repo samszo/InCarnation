@@ -28,6 +28,7 @@ test('buildSparqlQuery injects day month and bounded limit', () => {
 test('buildSparqlQuery rejects invalid day or month values', () => {
   assert.throws(() => buildSparqlQuery({ day: 'x', month: 8, limit: 6 }), /jour/i);
   assert.throws(() => buildSparqlQuery({ day: 8, month: 44, limit: 6 }), /mois/i);
+  assert.throws(() => buildSparqlQuery({ day: 31, month: 4, limit: 6 }), /invalide/i);
 });
 
 test('normalizeResults separates born and dead people without duplicates', () => {
@@ -78,6 +79,8 @@ test('buildGraphData links every born person to every dead person', () => {
 
 test('formatDate keeps Wikidata UTC dates stable and sanitizeHttpUrl filters unsafe URLs', () => {
   assert.equal(formatDate('1896-12-10T00:00:00Z'), '10 décembre 1896');
+  assert.equal(sanitizeHttpUrl('http://www.wikidata.org/entity/Q1'), 'http://www.wikidata.org/entity/Q1');
   assert.equal(sanitizeHttpUrl('https://www.wikidata.org/entity/Q42'), 'https://www.wikidata.org/entity/Q42');
+  assert.equal(sanitizeHttpUrl('://broken-url'), null);
   assert.equal(sanitizeHttpUrl('javascript:alert(1)'), null);
 });

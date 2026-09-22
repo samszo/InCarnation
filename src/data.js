@@ -18,8 +18,7 @@ export function sanitizeLimit(limit) {
 }
 
 export function buildSparqlQuery({ day, month, limit }) {
-  const safeDay = sanitizeDay(day);
-  const safeMonth = sanitizeMonth(month);
+  const { day: safeDay, month: safeMonth } = sanitizeMonthDay(day, month);
   const safeLimit = sanitizeLimit(limit);
 
   return `
@@ -72,8 +71,7 @@ export async function fetchIncarnations({ day, month, limit, endpoint = WIKIDATA
 }
 
 export function normalizeResults(bindings, { day, month }) {
-  const safeDay = sanitizeDay(day);
-  const safeMonth = sanitizeMonth(month);
+  const { day: safeDay, month: safeMonth } = sanitizeMonthDay(day, month);
   const bornPeople = [];
   const deadPeople = [];
   const seen = new Set();
@@ -171,6 +169,18 @@ export function sanitizeMonth(month) {
     throw new TypeError('Le mois doit être un entier entre 1 et 12.');
   }
   return safeMonth;
+}
+
+export function sanitizeMonthDay(day, month) {
+  const safeDay = sanitizeDay(day);
+  const safeMonth = sanitizeMonth(month);
+  const maxDay = new Date(Date.UTC(2024, safeMonth, 0)).getUTCDate();
+
+  if (safeDay > maxDay) {
+    throw new TypeError(`Le jour ${safeDay} est invalide pour le mois ${safeMonth}.`);
+  }
+
+  return { day: safeDay, month: safeMonth };
 }
 
 export function sanitizeHttpUrl(value) {
