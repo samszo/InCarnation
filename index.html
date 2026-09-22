@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>InCarnation</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">InCarnation</p>
+          <h1>Naissances et morts reliées par une même date</h1>
+          <p class="intro">
+            Recherchez les personnalités nées le même jour que d'autres sont mortes,
+            puis explorez leurs correspondances dans un graphe illustré.
+          </p>
+        </div>
+
+        <form id="search-form" class="controls">
+          <label>
+            Jour
+            <input id="day" name="day" type="number" min="1" max="31" required />
+          </label>
+
+          <label>
+            Mois
+            <input id="month" name="month" type="number" min="1" max="12" required />
+          </label>
+
+          <label>
+            Personnes par groupe
+            <input id="limit" name="limit" type="number" min="2" max="12" value="6" required />
+          </label>
+
+          <button type="submit">Relier ces destins</button>
+        </form>
+      </section>
+
+      <section class="status-panel">
+        <div id="status" class="status" aria-live="polite">Choisissez une date pour lancer la recherche.</div>
+        <div id="summary" class="summary"></div>
+      </section>
+
+      <section class="workspace">
+        <div class="graph-panel">
+          <div class="legend">
+            <span><i class="born-dot"></i>Nés ce jour-là</span>
+            <span><i class="dead-dot"></i>Morts ce jour-là</span>
+          </div>
+          <div id="graph" class="graph" role="group" aria-label="Graphe interactif des correspondances"></div>
+        </div>
+
+        <aside id="details" class="details">
+          <h2>Comment lire le graphe ?</h2>
+          <p>
+            Chaque lien relie une personne née à cette date à une personne morte ce même jour
+            (sur une autre année).
+          </p>
+          <p>Cliquez sur un portrait pour voir ses informations détaillées.</p>
+        </aside>
+      </section>
+    </main>
+
+    <script type="module" src="./src/app.js"></script>
+  </body>
+</html>

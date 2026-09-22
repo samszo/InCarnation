@@ -1,0 +1,17 @@
+{
+  "name": "incarnation",
+  "version": "1.0.0",
+  "description": "Trouver les réincarnations des personnes mortes à une date spécifique",
+  "type": "module",
+  "scripts": {
+    "start": "python3 -m http.server 4173",
+    "test": "node --test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://localhost:26831/samszo/InCarnation"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
