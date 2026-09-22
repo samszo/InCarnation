@@ -1,0 +1,65 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+
+import { buildGraphData, buildSparqlQuery, normalizeResults, sanitizeLimit } from '../src/data.js';
+
+test('sanitizeLimit keeps value inside supported bounds', () => {
+  assert.equal(sanitizeLimit('1'), 2);
+  assert.equal(sanitizeLimit('6'), 6);
+  assert.equal(sanitizeLimit('99'), 12);
+  assert.equal(sanitizeLimit('abc'), 6);
+});
+
+test('buildSparqlQuery injects day month and bounded limit', () => {
+  const query = buildSparqlQuery({ day: 8, month: 8, limit: 99 });
+
+  assert.match(query, /DAY\(\?birthDate\) = 8 && MONTH\(\?birthDate\) = 8/);
+  assert.match(query, /DAY\(\?deathDate\) = 8 && MONTH\(\?deathDate\) = 8/);
+  assert.match(query, /LIMIT 12/);
+});
+
+test('normalizeResults separates born and dead people without duplicates', () => {
+  const results = normalizeResults(
+    [
+      {
+        person: { value: 'http://www.wikidata.org/entity/Q1' },
+        personLabel: { value: 'Ada Lovelace' },
+        role: { value: 'born' },
+        birthDate: { value: '1815-12-10T00:00:00Z' },
+      },
+      {
+        person: { value: 'http://www.wikidata.org/entity/Q1' },
+        personLabel: { value: 'Ada Lovelace' },
+        role: { value: 'born' },
+        birthDate: { value: '1815-12-10T00:00:00Z' },
+      },
+      {
+        person: { value: 'http://www.wikidata.org/entity/Q2' },
+        personLabel: { value: 'Alfred Nobel' },
+        role: { value: 'dead' },
+        deathDate: { value: '1896-12-10T00:00:00Z' },
+      },
+    ],
+    { day: 10, month: 12 },
+  );
+
+  assert.equal(results.bornPeople.length, 1);
+  assert.equal(results.deadPeople.length, 1);
+  assert.equal(results.sharedDateLabel, '10 décembre');
+});
+
+test('buildGraphData links every born person to every dead person', () => {
+  const graph = buildGraphData({
+    bornPeople: [
+      { id: 'Q1', label: 'Ada', role: 'born' },
+      { id: 'Q2', label: 'Grace', role: 'born' },
+    ],
+    deadPeople: [{ id: 'Q3', label: 'Nobel', role: 'dead' }],
+  });
+
+  assert.equal(graph.nodes.length, 3);
+  assert.deepEqual(graph.links, [
+    { source: 'Q1', target: 'Q3' },
+    { source: 'Q2', target: 'Q3' },
+  ]);
+});
