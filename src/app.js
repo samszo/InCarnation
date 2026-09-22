@@ -39,10 +39,14 @@ form.addEventListener('submit', async (event) => {
     });
   } catch (error) {
     graphNode.replaceChildren();
-    detailsNode.innerHTML = `
-      <h2>Une erreur est survenue</h2>
-      <p>${error.message}</p>
-    `;
+    detailsNode.replaceChildren();
+
+    const title = document.createElement('h2');
+    title.textContent = 'Une erreur est survenue';
+    const message = document.createElement('p');
+    message.textContent = error instanceof Error ? error.message : 'Erreur inconnue';
+
+    detailsNode.append(title, message);
     statusNode.textContent = 'Impossible de charger les données.';
     summaryNode.textContent = 'Vérifiez votre connexion ou réessayez avec une autre date.';
   }

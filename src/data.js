@@ -1,4 +1,13 @@
 export const WIKIDATA_ENDPOINT = 'https://query.wikidata.org/sparql';
+const UTC_DATE_FORMATTER = new Intl.DateTimeFormat('fr-FR', {
+  dateStyle: 'long',
+  timeZone: 'UTC',
+});
+const UTC_SHARED_DATE_FORMATTER = new Intl.DateTimeFormat('fr-FR', {
+  day: 'numeric',
+  month: 'long',
+  timeZone: 'UTC',
+});
 
 export function sanitizeLimit(limit) {
   const value = Number.parseInt(limit, 10);
@@ -9,8 +18,8 @@ export function sanitizeLimit(limit) {
 }
 
 export function buildSparqlQuery({ day, month, limit }) {
-  const safeDay = Number.parseInt(day, 10);
-  const safeMonth = Number.parseInt(month, 10);
+  const safeDay = sanitizeDay(day);
+  const safeMonth = sanitizeMonth(month);
   const safeLimit = sanitizeLimit(limit);
 
   return `
@@ -63,6 +72,8 @@ export async function fetchIncarnations({ day, month, limit, endpoint = WIKIDATA
 }
 
 export function normalizeResults(bindings, { day, month }) {
+  const safeDay = sanitizeDay(day);
+  const safeMonth = sanitizeMonth(month);
   const bornPeople = [];
   const deadPeople = [];
   const seen = new Set();
@@ -85,12 +96,9 @@ export function normalizeResults(bindings, { day, month }) {
   }
 
   return {
-    day: Number.parseInt(day, 10),
-    month: Number.parseInt(month, 10),
-    sharedDateLabel: new Intl.DateTimeFormat('fr-FR', {
-      day: 'numeric',
-      month: 'long',
-    }).format(new Date(Date.UTC(2024, Number.parseInt(month, 10) - 1, Number.parseInt(day, 10)))),
+    day: safeDay,
+    month: safeMonth,
+    sharedDateLabel: UTC_SHARED_DATE_FORMATTER.format(new Date(Date.UTC(2024, safeMonth - 1, safeDay))),
     bornPeople,
     deadPeople,
   };
@@ -130,9 +138,7 @@ export function formatDate(raw) {
     return raw;
   }
 
-  return new Intl.DateTimeFormat('fr-FR', {
-    dateStyle: 'long',
-  }).format(date);
+  return UTC_DATE_FORMATTER.format(date);
 }
 
 export function toPerson(binding) {
@@ -142,11 +148,40 @@ export function toPerson(binding) {
     role: binding.role?.value ?? 'born',
     birthDate: binding.birthDate?.value ?? null,
     deathDate: binding.deathDate?.value ?? null,
-    image: binding.image?.value ?? null,
-    wikidataUrl: binding.person?.value ?? null,
+    image: sanitizeHttpUrl(binding.image?.value),
+    wikidataUrl: sanitizeHttpUrl(binding.person?.value),
   };
 }
 
 export function extractEntityId(uri) {
   return uri?.split('/').at(-1) ?? '';
+}
+
+export function sanitizeDay(day) {
+  const safeDay = Number.parseInt(day, 10);
+  if (Number.isNaN(safeDay) || safeDay < 1 || safeDay > 31) {
+    throw new TypeError('Le jour doit être un entier entre 1 et 31.');
+  }
+  return safeDay;
+}
+
+export function sanitizeMonth(month) {
+  const safeMonth = Number.parseInt(month, 10);
+  if (Number.isNaN(safeMonth) || safeMonth < 1 || safeMonth > 12) {
+    throw new TypeError('Le mois doit être un entier entre 1 et 12.');
+  }
+  return safeMonth;
+}
+
+export function sanitizeHttpUrl(value) {
+  if (!value) {
+    return null;
+  }
+
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.toString() : null;
+  } catch {
+    return null;
+  }
 }

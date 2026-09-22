@@ -5,8 +5,10 @@ const COLORS = {
   born: '#2f6fed',
   dead: '#d94b4b',
 };
+let activeSimulation = null;
 
 export function renderGraph({ container, graph, onSelect }) {
+  activeSimulation?.stop();
   container.replaceChildren();
 
   if (!graph.nodes.length) {
@@ -58,6 +60,7 @@ export function renderGraph({ container, graph, onSelect }) {
     .force('collide', d3.forceCollide(radius + 48))
     .force('x', d3.forceX((node) => (node.role === 'born' ? width * 0.28 : width * 0.72)).strength(0.28))
     .force('y', d3.forceY(height / 2).strength(0.08));
+  activeSimulation = simulation;
 
   const link = svg
     .append('g')
@@ -163,32 +166,42 @@ export function renderDetails(container, person) {
     return;
   }
 
-  container.innerHTML = `
-    <div class="details-card">
-      <span class="pill ${person.role === 'born' ? 'pill-born' : 'pill-dead'}">
-        ${person.role === 'born' ? 'Né ce jour-là' : 'Mort ce jour-là'}
-      </span>
-      ${
-        person.image
-          ? `<img src="${person.image}" alt="Portrait de ${escapeHtml(person.label)}" />`
-          : ''
-      }
-      <div>
-        <h2>${escapeHtml(person.label)}</h2>
-        <p class="details-meta">${escapeHtml(formatPersonDates(person))}</p>
-      </div>
-      <p>
-        <a href="${person.wikidataUrl}" target="_blank" rel="noreferrer">Voir la fiche Wikidata</a>
-      </p>
-    </div>
-  `;
-}
+  container.replaceChildren();
 
-function escapeHtml(value) {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
+  const card = document.createElement('div');
+  card.className = 'details-card';
+
+  const pill = document.createElement('span');
+  pill.className = `pill ${person.role === 'born' ? 'pill-born' : 'pill-dead'}`;
+  pill.textContent = person.role === 'born' ? 'Né ce jour-là' : 'Mort ce jour-là';
+  card.append(pill);
+
+  if (person.image) {
+    const image = document.createElement('img');
+    image.src = person.image;
+    image.alt = `Portrait de ${person.label}`;
+    card.append(image);
+  }
+
+  const textBlock = document.createElement('div');
+  const heading = document.createElement('h2');
+  heading.textContent = person.label;
+  const meta = document.createElement('p');
+  meta.className = 'details-meta';
+  meta.textContent = formatPersonDates(person);
+  textBlock.append(heading, meta);
+  card.append(textBlock);
+
+  if (person.wikidataUrl) {
+    const linkParagraph = document.createElement('p');
+    const link = document.createElement('a');
+    link.href = person.wikidataUrl;
+    link.target = '_blank';
+    link.rel = 'noreferrer';
+    link.textContent = 'Voir la fiche Wikidata';
+    linkParagraph.append(link);
+    card.append(linkParagraph);
+  }
+
+  container.append(card);
 }
