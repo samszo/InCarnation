@@ -46,6 +46,8 @@ export function renderGraph({ container, graph, onSelect }) {
       .attr('href', node.image)
       .attr('width', radius * 2)
       .attr('height', radius * 2)
+      .attr('aria-hidden', true)
+      .attr('focusable', false)
       .attr('preserveAspectRatio', 'xMidYMid slice');
   });
 
@@ -74,6 +76,7 @@ export function renderGraph({ container, graph, onSelect }) {
     .selectAll('g')
     .data(nodes)
     .join('g')
+    .attr('class', 'graph-node')
     .attr('tabindex', 0)
     .attr('role', 'button')
     .attr('aria-label', (d) => `${d.label}, ${formatPersonDates(d)}`)

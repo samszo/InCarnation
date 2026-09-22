@@ -1,5 +1,6 @@
 import { buildGraphData, fetchIncarnations, sanitizeLimit } from './data.js';
 import { renderDetails, renderGraph } from './graph.js';
+import { handleSearchSubmission } from './ui.js';
 
 const form = document.querySelector('#search-form');
 const dayInput = document.querySelector('#day');
@@ -22,32 +23,29 @@ form.addEventListener('submit', async (event) => {
   const limit = sanitizeLimit(limitInput.value);
   limitInput.value = String(limit);
 
-  statusNode.textContent = 'Recherche en cours dans Wikidata…';
-  summaryNode.textContent = '';
-
-  try {
-    const results = await fetchIncarnations({ day, month, limit });
-    const graph = buildGraphData(results);
-
-    statusNode.textContent = `Date partagée : ${results.sharedDateLabel}`;
-    summaryNode.textContent = `${results.bornPeople.length} naissance(s), ${results.deadPeople.length} décès, ${graph.links.length} lien(s) potentiels affichés.`;
-
-    renderGraph({
-      container: graphNode,
-      graph,
-      onSelect: (person) => renderDetails(detailsNode, person),
-    });
-  } catch (error) {
-    graphNode.replaceChildren();
-    detailsNode.replaceChildren();
-
-    const title = document.createElement('h2');
-    title.textContent = 'Une erreur est survenue';
-    const message = document.createElement('p');
-    message.textContent = error instanceof Error ? error.message : 'Erreur inconnue';
-
-    detailsNode.append(title, message);
-    statusNode.textContent = 'Impossible de charger les données.';
-    summaryNode.textContent = 'Vérifiez votre connexion ou réessayez avec une autre date.';
-  }
+  await handleSearchSubmission({
+    day,
+    month,
+    limit,
+    statusNode,
+    summaryNode,
+    graphNode,
+    detailsNode,
+    fetchIncarnationsFn: fetchIncarnations,
+    buildGraphDataFn: buildGraphData,
+    renderGraphFn: renderGraph,
+    renderDetailsFn: renderDetails,
+    renderErrorDetailsFn: renderErrorDetails,
+  });
 });
+
+function renderErrorDetails(container, error) {
+  container.replaceChildren();
+
+  const title = document.createElement('h2');
+  title.textContent = 'Une erreur est survenue';
+  const message = document.createElement('p');
+  message.textContent = error instanceof Error ? error.message : 'Erreur inconnue';
+
+  container.append(title, message);
+}

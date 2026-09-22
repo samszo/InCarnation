@@ -3,11 +3,20 @@ const UTC_DATE_FORMATTER = new Intl.DateTimeFormat('fr-FR', {
   dateStyle: 'long',
   timeZone: 'UTC',
 });
-const UTC_SHARED_DATE_FORMATTER = new Intl.DateTimeFormat('fr-FR', {
-  day: 'numeric',
-  month: 'long',
-  timeZone: 'UTC',
-});
+const MONTH_NAMES_FR = [
+  'janvier',
+  'février',
+  'mars',
+  'avril',
+  'mai',
+  'juin',
+  'juillet',
+  'août',
+  'septembre',
+  'octobre',
+  'novembre',
+  'décembre',
+];
 
 export function sanitizeLimit(limit) {
   const value = Number.parseInt(limit, 10);
@@ -96,7 +105,7 @@ export function normalizeResults(bindings, { day, month }) {
   return {
     day: safeDay,
     month: safeMonth,
-    sharedDateLabel: UTC_SHARED_DATE_FORMATTER.format(new Date(Date.UTC(2024, safeMonth - 1, safeDay))),
+    sharedDateLabel: `${safeDay} ${MONTH_NAMES_FR[safeMonth - 1]}`,
     bornPeople,
     deadPeople,
   };
@@ -174,7 +183,8 @@ export function sanitizeMonth(month) {
 export function sanitizeMonthDay(day, month) {
   const safeDay = sanitizeDay(day);
   const safeMonth = sanitizeMonth(month);
-  const maxDay = new Date(Date.UTC(2024, safeMonth, 0)).getUTCDate();
+  const monthLengths = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  const maxDay = safeMonth === 2 && safeDay === 29 ? 29 : monthLengths[safeMonth - 1];
 
   if (safeDay > maxDay) {
     throw new TypeError(`Le jour ${safeDay} est invalide pour le mois ${safeMonth}.`);
